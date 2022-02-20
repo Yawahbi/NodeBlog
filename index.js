@@ -14,7 +14,7 @@ const app = express();
 //     res.send('Done');
 // });
 
-sequelize.sync({ force: true }).then(() => console.log('db is ready'));
+sequelize.sync({ force: false }).then(() => console.log('db is ready'));
 
 app.use(express.json());
 
@@ -26,7 +26,20 @@ app.post('/users', async (req, res) => {
 
 // Find All
 app.get('/users', async (req, res) => {
-    const users = await User.findAll();
+    let page = Number.parseInt(req.query.page);
+    let size = Number.parseInt(req.query.size);
+
+    if (Number.isNaN(page)) {
+        page = 0;
+    }
+    if (Number.isNaN(size)) {
+        size = 3
+    }
+
+    const users = await User.findAndCountAll({
+        limit: size,
+        offset: page * size
+    });
     res.send(users);
 });
 
