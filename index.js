@@ -1,5 +1,6 @@
 const express = require('express');
 const sequelize = require('./database');
+const InvalidIdException = require('./InvalidIdException');
 const User = require('./User');
 
 const app = express();
@@ -44,15 +45,23 @@ app.get('/users', async (req, res) => {
 });
 
 // Find By ID
-app.get('/users/:id', async (req, res) => {
-    const id = req.params.id;
+app.get('/users/:id', async (req, res, next) => {
+    const id = Number.parseInt(req.params.id);
+    if (Number.isNaN(id)) {
+        return next(new InvalidIdException());
+    }
+
     const user = await User.findOne({ where: { id: id } });
     res.send(user);
 });
 
 // Update
 app.put('/users/:id', async (req, res) => {
-    const id = req.params.id;
+    const id = Number.parseInt(req.params.id);
+    if (Number.isNaN(id)) {
+        next(new InvalidIdException());
+    }
+
     const user = await User.findOne({ where: { id: id } });
     user.username = req.body.username;
     await user.save();
@@ -61,9 +70,18 @@ app.put('/users/:id', async (req, res) => {
 
 // Delete 
 app.delete('/users/:id', async (req, res) => {
-    const id = req.params.id;
+    const id = Number.parseInt(req.params.id);
+    if (Number.isNaN(id)) {
+        next(new InvalidIdException());
+    }
+
     await User.destroy({ where: { id: id } });
     res.send("user deleted");
+});
+
+app.use((err, req, res, next) => {
+    console.log(err);
+    res.status(err.status).send(err.message);
 });
 
 app.listen(3000, () => console.log('server running on port 3000'));
