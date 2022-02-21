@@ -1,6 +1,6 @@
 const express = require('express');
 const sequelize = require('./database');
-const InvalidIdException = require('./InvalidIdException');
+const IdControl = require('./IdControlMiddleware');
 const User = require('./User');
 
 const app = express();
@@ -44,23 +44,18 @@ app.get('/users', async (req, res) => {
     res.send(users);
 });
 
+
 // Find By ID
-app.get('/users/:id', async (req, res, next) => {
-    const id = Number.parseInt(req.params.id);
-    if (Number.isNaN(id)) {
-        return next(new InvalidIdException());
-    }
+app.get('/users/:id', IdControl, async (req, res, next) => {
+    const id = req.params.id;
 
     const user = await User.findOne({ where: { id: id } });
     res.send(user);
 });
 
 // Update
-app.put('/users/:id', async (req, res) => {
-    const id = Number.parseInt(req.params.id);
-    if (Number.isNaN(id)) {
-        next(new InvalidIdException());
-    }
+app.put('/users/:id', IdControl, async (req, res) => {
+    const id = req.params.id;
 
     const user = await User.findOne({ where: { id: id } });
     user.username = req.body.username;
@@ -69,11 +64,8 @@ app.put('/users/:id', async (req, res) => {
 });
 
 // Delete 
-app.delete('/users/:id', async (req, res) => {
-    const id = Number.parseInt(req.params.id);
-    if (Number.isNaN(id)) {
-        next(new InvalidIdException());
-    }
+app.delete('/users/:id', IdControl, async (req, res) => {
+    const id = req.params.id;
 
     await User.destroy({ where: { id: id } });
     res.send("user deleted");
